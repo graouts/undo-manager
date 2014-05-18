@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tests for undo-manager</title>
+    <script type="text/javascript" src="build/build.js"></script>
+    <script type="text/javascript">
+    
+        var UndoManager = require("undo-manager");
+        var manager = new UndoManager;
+    
+        var obj = {
+            _foo: 0,
+
+            get foo()
+            {
+                return this._foo;
+            },
+
+            set foo(foo)
+            {
+                manager.registerPropertyUndo(this, "foo", this._foo);
+                this._foo = foo;
+            }
+        };
+
+        function test(name, pass)
+        {
+            if (pass)
+                console.log("\tPASS:", name);
+            else
+                console.error("\tFAIL:", name);
+        }
+
+        console.log("Set obj.foo 5 times incrementally");
+        obj.foo = 1;
+        obj.foo = 2;
+        obj.foo = 3;
+        obj.foo = 4;
+        obj.foo = 5;
+        test("obj.foo === 5", obj.foo === 5);
+
+        console.log("Undo 4 times");
+        manager.undo();
+        manager.undo();
+        manager.undo();
+        manager.undo();
+        test("obj.foo === 1", obj.foo === 1);
+        
+        console.log("Redo 3 times");
+        manager.redo();
+        manager.redo();
+        manager.redo();
+        test("obj.foo === 4", obj.foo === 4);
+        
+        console.log("Undo 2 times");
+        manager.undo();
+        manager.undo();
+        test("obj.foo === 2", obj.foo === 2);
+        
+        console.log("Set obj.foo = 6 to trash redo stack");
+        obj.foo = 6;
+        test("obj.foo === 6", obj.foo === 6);
+        test("manager.canRedo === false", !manager.canRedo);
+        
+        console.log("Undo once");
+        manager.undo();
+        test("obj.foo === 2", obj.foo === 2);
+        test("manager.canRedo === true", manager.canRedo);
+            
+        console.log("Redo once");
+        manager.redo();
+        // -> should be 6
+        test("obj.foo === 6", obj.foo === 6);
+        test("manager.canRedo === false", !manager.canRedo);
+
+    </script>
+</head>
+<body>
+</body>
+</html>

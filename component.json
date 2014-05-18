@@ -1,0 +1,11 @@
+{
+    "name": "undo-manager",
+    "repo": "graouts/undo-manager",
+    "description": "A JavaScript object to manage your undo/redo stack",
+    "version": "0.0.1",
+    "license": "MIT",
+    "main": "index.js",
+    "scripts": [
+        "index.js"
+    ]
+}
