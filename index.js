@@ -16,6 +16,8 @@ function UndoManager()
 UndoManager.prototype = {
     constructor: UndoManager,
 
+    // Public
+
     get canUndo()
     {
         return this._index > 0;
@@ -24,11 +26,6 @@ UndoManager.prototype = {
     get canRedo()
     {
         return this._index < this._actions.length - 1;
-    },
-
-    get shouldIgnoreRegisterCalls()
-    {
-        return (this._isRedoing || (this._isUndoing && this.canRedo));
     },
 
     undo: function()
@@ -81,7 +78,7 @@ UndoManager.prototype = {
 
     registerPropertyUndo: function(target, propertyName, value)
     {
-        if (this.shouldIgnoreRegisterCalls)
+        if (this._shouldIgnoreRegisterCalls())
             return;
 
         var fun = function() {
@@ -93,7 +90,7 @@ UndoManager.prototype = {
 
     registerMethodUndo: function(target, method)
     {
-        if (this.shouldIgnoreRegisterCalls)
+        if (this._shouldIgnoreRegisterCalls())
             return;
 
         var args = Array.prototype.slice.call(arguments, 2);
@@ -104,13 +101,20 @@ UndoManager.prototype = {
 
     registerFunctionUndo: function(fun)
     {
-        if (this.shouldIgnoreRegisterCalls)
+        if (this._shouldIgnoreRegisterCalls())
             return;
 
         if (this._groupingLevel > 0)
             this._groupedActions.push(fun);
         else
             this._registerAction(fun);
+    },
+
+    // Private
+
+    _shouldIgnoreRegisterCalls: function()
+    {
+        return (this._isRedoing || (this._isUndoing && this.canRedo));
     },
 
     _registerAction: function(action)
