@@ -9,8 +9,8 @@ function UndoManager()
     this._groupedActions = [];
     this._groupingLevel = 0;
 
-    this.isUndoing = false;
-    this.isRedoing = false;
+    this._isUndoing = false;
+    this._isRedoing = false;
 }
 
 UndoManager.prototype = {
@@ -28,7 +28,7 @@ UndoManager.prototype = {
 
     get shouldIgnoreRegisterCalls()
     {
-        return (this.isRedoing || (this.isUndoing && this.canRedo));
+        return (this._isRedoing || (this._isUndoing && this.canRedo));
     },
 
     undo: function()
@@ -38,9 +38,9 @@ UndoManager.prototype = {
     
         this._index--;
 
-        this.isUndoing = true;
+        this._isUndoing = true;
         this._executeAction();
-        this.isUndoing = false;
+        this._isUndoing = false;
     },
 
     redo: function()
@@ -50,9 +50,9 @@ UndoManager.prototype = {
 
         this._index++;
 
-        this.isRedoing = true;
+        this._isRedoing = true;
         this._executeAction();
-        this.isRedoing = false;
+        this._isRedoing = false;
 
         if (this._index === this._actions.length - 1) {
             this._actions.pop();
@@ -119,7 +119,7 @@ UndoManager.prototype = {
             this._actions.splice(this._index, Number.MAX_VALUE);
 
         this._index = this._actions.push(action);
-        if (this.isUndoing)
+        if (this._isUndoing)
             this._index -= 2;
     },
 
@@ -129,7 +129,7 @@ UndoManager.prototype = {
         if (typeof action === "function")
             action();
         else if (Array.isArray(action)) {
-            (this.isUndoing ? action.slice().reverse(): action).forEach(function(groupedAction) {
+            (this._isUndoing ? action.slice().reverse(): action).forEach(function(groupedAction) {
                 groupedAction();
             });
         }
