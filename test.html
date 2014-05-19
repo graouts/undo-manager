@@ -31,47 +31,106 @@
                 console.error("\tFAIL:", name);
         }
 
-        console.log("Set obj.foo 5 times incrementally");
-        obj.foo = 1;
-        obj.foo = 2;
-        obj.foo = 3;
-        obj.foo = 4;
-        obj.foo = 5;
-        test("obj.foo === 5", obj.foo === 5);
+        function dumpActions()
+        {
+            console.log("Actions", manager._actions.map(function(action) {
+                if (typeof action === "function")
+                    return action.value;
+                else {
+                    return action.map(function(subAction) {
+                        return subAction.value;
+                    });
+                }
+            }), manager._index, manager.canRedo);
+        }
 
-        console.log("Undo 4 times");
-        manager.undo();
-        manager.undo();
-        manager.undo();
-        manager.undo();
-        test("obj.foo === 1", obj.foo === 1);
+        function increment(times)
+        {
+            while(times--)
+                obj.foo++;
+        }
+
+        console.clear();
+
+        setTimeout(function() {
+            console.log("Increment obj.foo 5 times");
+            increment(5);
+            test("obj.foo === 5", obj.foo === 5);
+
+            console.log("Undo 4 times");
+            manager.undo();
+            manager.undo();
+            manager.undo();
+            manager.undo();
+            test("obj.foo === 1", obj.foo === 1);
         
-        console.log("Redo 3 times");
-        manager.redo();
-        manager.redo();
-        manager.redo();
-        test("obj.foo === 4", obj.foo === 4);
+            console.log("Redo 3 times");
+            manager.redo();
+            manager.redo();
+            manager.redo();
+            test("obj.foo === 4", obj.foo === 4);
         
-        console.log("Undo 2 times");
-        manager.undo();
-        manager.undo();
-        test("obj.foo === 2", obj.foo === 2);
+            console.log("Undo 2 times");
+            manager.undo();
+            manager.undo();
+            test("obj.foo === 2", obj.foo === 2);
         
-        console.log("Set obj.foo = 6 to trash redo stack");
-        obj.foo = 6;
-        test("obj.foo === 6", obj.foo === 6);
-        test("manager.canRedo === false", !manager.canRedo);
+            console.log("Set obj.foo = 6 to trash redo stack");
+            obj.foo = 6;
+            test("obj.foo === 6", obj.foo === 6);
+            test("manager.canRedo === false", !manager.canRedo);
         
-        console.log("Undo once");
-        manager.undo();
-        test("obj.foo === 2", obj.foo === 2);
-        test("manager.canRedo === true", manager.canRedo);
+            console.log("Undo once");
+            manager.undo();
+            test("obj.foo === 2", obj.foo === 2);
+            test("manager.canRedo === true", manager.canRedo);
             
-        console.log("Redo once");
-        manager.redo();
-        // -> should be 6
-        test("obj.foo === 6", obj.foo === 6);
-        test("manager.canRedo === false", !manager.canRedo);
+            console.log("Redo once");
+            manager.redo();
+            test("obj.foo === 6", obj.foo === 6);
+            test("manager.canRedo === false", !manager.canRedo);
+
+            console.log("Increment once")
+            increment(1);
+            test("obj.foo === 7", obj.foo === 7);
+            
+            console.log("Undo once");
+            manager.undo();
+            test("obj.foo === 6", obj.foo === 6);
+            
+            console.log("Redo once");
+            manager.redo();
+            test("obj.foo === 7", obj.foo === 7);
+
+            console.log("Increment obj.foo 4 times within two nested groups");
+            manager.beginGroup();
+            increment(1);
+                manager.beginGroup();
+                increment(2);
+                manager.endGroup();
+            increment(1);
+            manager.endGroup();
+            test("obj.foo === 11", obj.foo === 11);
+            
+            console.log("Undo once");
+            manager.undo();
+            test("obj.foo === 7", obj.foo === 7);
+            
+            console.log("Redo once");
+            manager.redo();
+            test("obj.foo === 11", obj.foo === 11);
+
+            console.log("Increment once")
+            increment(1);
+            test("obj.foo === 12", obj.foo === 12);
+
+            console.log("Undo 4 times");
+            manager.undo();
+            manager.undo();
+            manager.undo();
+            manager.undo();
+            test("obj.foo === 2", obj.foo === 2);
+        });
 
     </script>
 </head>
