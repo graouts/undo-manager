@@ -148,6 +148,23 @@
             console.log("Redo once");
             manager.redo();
             test("obj.foo === 20", obj.foo === 20);
+
+            console.log("Increment obj.foo 4 times within two unclosed nested groups");
+            manager.beginGroup();
+            increment(2);
+            manager.beginGroup();
+            increment(2);
+            test("obj.foo === 24", obj.foo === 24);
+
+            console.log("Undo twice");
+            manager.undo();
+            manager.undo();
+            test("obj.foo === 2", obj.foo === 2);
+            
+            console.log("Redo twice");
+            manager.redo();
+            manager.redo();
+            test("obj.foo === 24", obj.foo === 24);
         });
 
     </script>

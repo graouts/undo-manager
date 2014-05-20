@@ -32,7 +32,10 @@ UndoManager.prototype = {
     {
         if (!this.canUndo)
             return;
-    
+
+        while (this._groupingLevel)
+            this.endGroup();
+
         this._index--;
 
         this._isUndoing = true;
