@@ -37,19 +37,6 @@
                 console.error("\tFAIL:", name);
         }
 
-        function dumpActions()
-        {
-            console.log("Actions", manager._actions.map(function(action) {
-                if (typeof action === "function")
-                    return action.value;
-                else {
-                    return action.map(function(subAction) {
-                        return subAction.value;
-                    });
-                }
-            }), manager._index, manager.canRedo);
-        }
-
         function increment(times)
         {
             while(times--)

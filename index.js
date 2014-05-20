@@ -84,11 +84,9 @@ UndoManager.prototype = {
         if (this._shouldIgnoreRegisterCalls())
             return;
 
-        var fun = function() {
+        this.registerFunctionUndo(function() {
             target[propertyName] = value;
-        };
-        fun.value = value;
-        this.registerFunctionUndo(fun);
+        });
     },
 
     registerMethodUndo: function(target, method)
