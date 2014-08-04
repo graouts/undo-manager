@@ -3,8 +3,8 @@ module.exports = UndoManager;
 
 function UndoManager()
 {
-    this._index = 0;
-    this._actions = [];
+    this._undoStack = [];
+    this._redoStack = [];
 
     this._groupedActions = [];
     this._groupingLevel = 0;
@@ -20,12 +20,12 @@ UndoManager.prototype = {
 
     get canUndo()
     {
-        return this._index > 0;
+        return this._undoStack.length > 0;
     },
 
     get canRedo()
     {
-        return this._index < this._actions.length - 1;
+        return this._redoStack.length > 0;
     },
 
     undo: function()
@@ -36,10 +36,10 @@ UndoManager.prototype = {
         while (this._groupingLevel)
             this.endGroup();
 
-        this._index--;
-
         this._isUndoing = true;
-        this._executeAction();
+        this.beginGroup();
+        this._executeAction(this._undoStack.pop());
+        this.endGroup();
         this._isUndoing = false;
     },
 
@@ -48,16 +48,11 @@ UndoManager.prototype = {
         if (!this.canRedo)
             return;
 
-        this._index++;
-
         this._isRedoing = true;
-        this._executeAction();
+        this.beginGroup();
+        this._executeAction(this._redoStack.pop());
+        this.endGroup();
         this._isRedoing = false;
-
-        if (this._index === this._actions.length - 1) {
-            this._actions.pop();
-            this._index--;
-        }
     },
 
     beginGroup: function()
@@ -81,9 +76,6 @@ UndoManager.prototype = {
 
     registerPropertyUndo: function(target, propertyName, value)
     {
-        if (this._shouldIgnoreRegisterCalls())
-            return;
-
         this.registerFunctionUndo(function() {
             target[propertyName] = value;
         });
@@ -91,9 +83,6 @@ UndoManager.prototype = {
 
     registerMethodUndo: function(target, method)
     {
-        if (this._shouldIgnoreRegisterCalls())
-            return;
-
         var args = Array.prototype.slice.call(arguments, 2);
         this.registerFunctionUndo(function() {
             method.apply(target, args);
@@ -102,9 +91,6 @@ UndoManager.prototype = {
 
     registerFunctionUndo: function(fun)
     {
-        if (this._shouldIgnoreRegisterCalls())
-            return;
-
         if (this._groupingLevel > 0)
             this._groupedActions.push(fun);
         else
@@ -113,30 +99,24 @@ UndoManager.prototype = {
 
     // Private
 
-    _shouldIgnoreRegisterCalls: function()
-    {
-        return (this._isRedoing || (this._isUndoing && this.canRedo));
-    },
-
     _registerAction: function(action)
     {
-        if (this.canRedo)
-            this._actions.splice(this._index, Number.MAX_VALUE);
-
-        this._index = this._actions.push(action);
         if (this._isUndoing)
-            this._index -= 2;
+            this._redoStack.push(action);
+        else {
+            this._undoStack.push(action);
+            if (!this._isRedoing)
+                this._redoStack = [];
+        }
     },
 
-    _executeAction: function()
+    _executeAction: function(action)
     {
-        var action = this._actions[this._index];
         if (typeof action === "function")
             action();
         else if (Array.isArray(action)) {
-            (this._isUndoing ? action.slice().reverse(): action).forEach(function(groupedAction) {
-                groupedAction();
-            });
+            while (action.length)
+                action.pop()();
         }
     }
 };
